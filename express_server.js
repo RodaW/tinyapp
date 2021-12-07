@@ -6,6 +6,9 @@ const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
+function generateRandomString() {
+
+}
 app.use(express.urlencoded({extended: true}));
 app.get("/", (req, res) => {
   res.send("Hello!");
@@ -31,6 +34,10 @@ app.get("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
   const templateVars = { shortURL, longURL: urlDatabase[shortURL] };
   res.render("urls_show", templateVars);
+});
+app.get("/u/:shortURL", (req, res) => {
+  // const longURL = ...
+  res.redirect(longURL);
 });
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
