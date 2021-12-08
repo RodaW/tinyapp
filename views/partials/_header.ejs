@@ -19,7 +19,12 @@
       </div>
     </div>
     <% if (username){ %>
-    <h4><%= username %> <a class="btn btn-danger btn-sm">logout</a> </h4>
+    <h4>
+      <%= username %>
+      <form action="/logout" class="d-inline-block" method="post">
+        <button class="btn btn-danger btn-sm" type="submit">logout</button>
+      </form>
+    </h4>
     <% } else{%>
     <form method="post" class="form-inline" action="/login">
       <input
