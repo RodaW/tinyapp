@@ -30,6 +30,9 @@ app.post("/urls", (req, res) => {
 app.get("/urls/new", (req, res) => {
   res.render("urls_new",{ username: req.cookies["username"],});
 });
+app.get("/register", (req, res) => {
+  res.render("register",{ username: req.cookies["username"],});
+});
 app.get("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
   const templateVars = { shortURL, longURL: urlDatabase[shortURL], username: req.cookies["username"], };
