@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-  "start": "Nodemon express_server.js"
+    "start": "Nodemon express_server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "cookie-parser": "^1.4.6",
     "ejs": "^3.1.6",
     "express": "^4.17.1"
   },
