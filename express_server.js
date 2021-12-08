@@ -7,7 +7,21 @@ const urlDatabase = {
   b2xVn2: "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
 };
-//function generateRandomString() {}
+const users = {
+  userRandomID: {
+    id: "userRandomID",
+    email: "user@example.com",
+    password: "purple-monkey-dinosaur",
+  },
+  user2RandomID: {
+    id: "user2RandomID",
+    email: "user2@example.com",
+    password: "dishwasher-funk",
+  },
+};
+function generateRandomString() {
+  return Date.now();
+}
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.get("/", (req, res) => {
@@ -20,7 +34,7 @@ app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, username: req.cookies["username"] };
+  const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };
   res.render("urls_index", templateVars);
 });
 app.post("/urls", (req, res) => {
@@ -28,14 +42,30 @@ app.post("/urls", (req, res) => {
   res.send("Ok"); // Respond with 'Ok' (we will replace this)
 });
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new",{ username: req.cookies["username"],});
+  res.render("urls_new", { user: users[req.cookies.user_id] });
 });
 app.get("/register", (req, res) => {
-  res.render("register",{ username: req.cookies["username"],});
+  res.render("register", { user: users[req.cookies.user_id] });
+});
+app.post("/register", (req, res) => {
+  const id = generateRandomString();
+  const { email, password } = req.body;
+  users[id] = {
+    id,
+    email,
+    password,
+  };
+  res.cookie("user_id", id);
+  console.log(users);
+  res.redirect("/urls");
 });
 app.get("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
-  const templateVars = { shortURL, longURL: urlDatabase[shortURL], username: req.cookies["username"], };
+  const templateVars = {
+    shortURL,
+    longURL: urlDatabase[shortURL],
+    user: users[req.cookies.user_id],
+  };
   res.render("urls_show", templateVars);
 });
 app.post("/urls/:shortURL", (req, res) => {
