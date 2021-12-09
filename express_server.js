@@ -50,6 +50,17 @@ app.get("/register", (req, res) => {
 app.post("/register", (req, res) => {
   const id = generateRandomString();
   const { email, password } = req.body;
+  if (!email.trim() || !password.trim()) {
+    return res.status(400).send();
+  }
+  for (const key in users) {
+    if (Object.hasOwnProperty.call(users, key)) {
+      const element = users[key];
+      if (element.email === email.trim()) {
+        return res.status(400).send();
+      }
+    }
+  }
   users[id] = {
     id,
     email,
