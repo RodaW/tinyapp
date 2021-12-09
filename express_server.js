@@ -52,14 +52,44 @@ function authMiddleware(req, res, next) {
   }
   next();
 }
+function urlsForUser(id) {
+  let response={}
+  let userUrls = Object.entries(urlDatabase)
+    .filter((url) => {
+      if (url[1].userID === id) {
+        return true;
+      }
+      return false;
+    })
+    .forEach((url) => {
+      response[url[0]] = url[1];
+    });
+  return response;
+}
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };
-  res.render("urls_index", templateVars);
+  if (req.cookies.user_id) {
+    let userUrls = Object.entries(urlDatabase)
+      .filter((url) => {
+        if (url[1].userID === req.cookies.user_id) {
+          return true;
+        }
+        return false;
+      })
+      .map((url) => {
+        return { shortUrl: url[0], ...url[1] };
+      });
+    const templateVars = {
+      urls: userUrls,
+      user: users[req.cookies.user_id],
+    };
+    return res.render("urls_index", templateVars);
+  }
+  return res.send("please login to view your urls");
 });
 app.get("/urls/new", authMiddleware, (req, res) => {
   res.render("urls_new", { user: users[req.cookies.user_id] });
@@ -67,7 +97,7 @@ app.get("/urls/new", authMiddleware, (req, res) => {
 app.post("/urls", authMiddleware, (req, res) => {
   urlDatabase[generateRandomString()] = {
     longURL: req.body.longURL,
-    userID: req.cookies.user_ID,
+    userID: req.cookies.user_id,
   };
   return res.redirect("/urls");
 });
@@ -97,6 +127,10 @@ app.post("/register", redirectLogin, (req, res) => {
 });
 app.get("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
+  let userUrls = urlsForUser(req.cookies.user_id);
+  if (!userUrls[shortURL]) {
+    return res.send("please login to view your urls");
+  }
   const templateVars = {
     shortURL,
     longURL: urlDatabase[shortURL].longURL,
@@ -106,12 +140,19 @@ app.get("/urls/:shortURL", (req, res) => {
 });
 app.post("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
-  console.log(req.body);
+  let userUrls = urlsForUser(req.cookies.user_id);
+  if (!userUrls[shortURL]) {
+    return res.send("please login to edit your urls");
+  }
   urlDatabase[shortURL].longURL = req.body.longURL;
   res.redirect("/urls");
 });
 app.post("/urls/:shortURL/delete", authMiddleware, (req, res) => {
   let shortURL = req.params.shortURL;
+  let userUrls = urlsForUser(req.cookies.user_id);
+  if (!userUrls[shortURL]) {
+    return res.send("please login to delete your urls");
+  }
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
