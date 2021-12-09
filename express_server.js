@@ -34,35 +34,41 @@ function findByEmail(email) {
   }
   return user;
 }
+function redirectLogin(req, res, next) {
+  if (req.cookies.user_id) {
+    res.redirect("/urls");
+  }
+  next();
+}
+function authMiddleware(req, res, next) {
+  if (!req.cookies.user_id) {
+    return res.redirect("/login");
+  }
+  next();
+}
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-app.get("/hello", (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
-});
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };
   res.render("urls_index", templateVars);
 });
-app.get("/urls/new", (req, res) => {
+app.get("/urls/new", authMiddleware, (req, res) => {
   res.render("urls_new", { user: users[req.cookies.user_id] });
 });
-app.post("/urls", (req, res) => {
+app.post("/urls", authMiddleware, (req, res) => {
   urlDatabase[generateRandomString()] = req.body.longURL;
   return res.redirect("/urls");
 });
-app.get("/register", (req, res) => {
+app.get("/register", redirectLogin, (req, res) => {
   res.render("register", { user: users[req.cookies.user_id] });
 });
-app.get("/login", (req, res) => {
+app.get("/login", redirectLogin, (req, res) => {
   res.render("login", { user: users[req.cookies.user_id] });
 });
-app.post("/register", (req, res) => {
+app.post("/register", redirectLogin, (req, res) => {
   const id = generateRandomString();
   const { email, password } = req.body;
   if (!email.trim() || !password.trim()) {
@@ -95,7 +101,7 @@ app.post("/urls/:shortURL", (req, res) => {
   urlDatabase[shortURL] = req.body.longURL;
   res.redirect("/urls");
 });
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.post("/urls/:shortURL/delete", authMiddleware, (req, res) => {
   let shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
   res.redirect("/urls");
@@ -105,7 +111,7 @@ app.get("/u/:shortURL", (req, res) => {
   res.redirect(urlDatabase[shortURL]);
 });
 
-app.post("/login", (req, res) => {
+app.post("/login", redirectLogin, (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const user = findByEmail(email);
@@ -118,7 +124,7 @@ app.post("/login", (req, res) => {
   res.cookie("user_id", user.id);
   res.redirect("/urls");
 });
-app.post("/logout", (req, res) => {
+app.post("/logout", authMiddleware, (req, res) => {
   res.clearCookie("user_id");
   res.redirect("/urls");
 });
