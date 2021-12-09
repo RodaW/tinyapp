@@ -22,6 +22,18 @@ const users = {
 function generateRandomString() {
   return Date.now();
 }
+function findByEmail(email) {
+  let user;
+  for (const key in users) {
+    if (Object.hasOwnProperty.call(users, key)) {
+      const element = users[key];
+      if (element.email === email.trim()) {
+        user = element;
+      }
+    }
+  }
+  return user;
+}
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.get("/", (req, res) => {
@@ -37,15 +49,18 @@ app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, user: users[req.cookies.user_id] };
   res.render("urls_index", templateVars);
 });
-app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
-});
 app.get("/urls/new", (req, res) => {
   res.render("urls_new", { user: users[req.cookies.user_id] });
 });
+app.post("/urls", (req, res) => {
+  urlDatabase[generateRandomString()] = req.body.longURL;
+  return res.redirect("/urls");
+});
 app.get("/register", (req, res) => {
   res.render("register", { user: users[req.cookies.user_id] });
+});
+app.get("/login", (req, res) => {
+  res.render("login", { user: users[req.cookies.user_id] });
 });
 app.post("/register", (req, res) => {
   const id = generateRandomString();
@@ -53,13 +68,8 @@ app.post("/register", (req, res) => {
   if (!email.trim() || !password.trim()) {
     return res.status(400).send();
   }
-  for (const key in users) {
-    if (Object.hasOwnProperty.call(users, key)) {
-      const element = users[key];
-      if (element.email === email.trim()) {
-        return res.status(400).send();
-      }
-    }
+  if (findByEmail(email)) {
+    return res.status(400).send();
   }
   users[id] = {
     id,
@@ -96,12 +106,20 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie("username", username);
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = findByEmail(email);
+  if (!user) {
+    return res.status(403).send();
+  }
+  if (user.password !== password.trim()) {
+    return res.status(403).send();
+  }
+  res.cookie("user_id", user.id);
   res.redirect("/urls");
 });
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 app.listen(PORT, () => {

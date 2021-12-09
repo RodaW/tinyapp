@@ -26,16 +26,8 @@
       </form>
     </h4>
     <% } else{%>
-    <form method="post" class="form-inline" action="/login">
-      <input
-        name="username"
-        class="form-control mr-sm-2"
-        type="text"
-        placeholder="Username"
-        aria-label="Search"
-      />
-      <button class="btn btn-primary my-2 my-sm-0" type="submit">login</button>
-    </form>
+      <a class="nav-item nav-link btn btn-primary btn-sm" href="/login">Login</a>
+      <a class="nav-item nav-link btn btn-outline-light btn-sm ml-3" href="/register">Register</a>
     <% } %>
   </nav>
 </header>
