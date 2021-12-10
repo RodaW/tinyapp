@@ -2,8 +2,11 @@ const express = require("express");
 const app = express();
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
-const PORT = 8080; // default port 8080
+const { findByEmail } = require("./helpers");
+
+const PORT = 8080;
 app.set("view engine", "ejs");
+
 const urlDatabase = {
   b2xVn2: {
     longURL: "http://www.lighthouselabs.ca",
@@ -14,6 +17,7 @@ const urlDatabase = {
     userID: "user2RandomID",
   },
 };
+
 const users = {
   userRandomID: {
     id: "userRandomID",
@@ -28,18 +32,6 @@ const users = {
 };
 function generateRandomString() {
   return Date.now();
-}
-function findByEmail(email) {
-  let user;
-  for (const key in users) {
-    if (Object.hasOwnProperty.call(users, key)) {
-      const element = users[key];
-      if (element.email === email.trim()) {
-        user = element;
-      }
-    }
-  }
-  return user;
 }
 function redirectLogin(req, res, next) {
   if (req.session.user_id) {
@@ -68,18 +60,20 @@ function urlsForUser(id) {
   return response;
 }
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieSession({
-  name: 'session',
-  keys: ["hfshdf"],
-
-  // Cookie Options
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}));
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["hfshdf"],
+    maxAge: 24 * 60 * 60 * 1000,
+  })
+);
 app.get("/", (req, res) => {
   res.send("Hello!");
 });
+
 app.get("/urls", (req, res) => {
   if (req.session.user_id) {
+    console.log(req.session.user_id);
     let userUrls = Object.entries(urlDatabase)
       .filter((url) => {
         if (url[1].userID === req.session.user_id) {
@@ -98,9 +92,11 @@ app.get("/urls", (req, res) => {
   }
   return res.send("please login to view your urls");
 });
+
 app.get("/urls/new", authMiddleware, (req, res) => {
   res.render("urls_new", { user: users[req.session.user_id] });
 });
+
 app.post("/urls", authMiddleware, (req, res) => {
   urlDatabase[generateRandomString()] = {
     longURL: req.body.longURL,
@@ -108,19 +104,22 @@ app.post("/urls", authMiddleware, (req, res) => {
   };
   return res.redirect("/urls");
 });
+
 app.get("/register", redirectLogin, (req, res) => {
   res.render("register", { user: users[req.session.user_id] });
 });
+
 app.get("/login", redirectLogin, (req, res) => {
   res.render("login", { user: users[req.session.user_id] });
 });
+
 app.post("/register", redirectLogin, (req, res) => {
   const id = generateRandomString();
   const { email, password } = req.body;
   if (!email.trim() || !password.trim()) {
     return res.status(400).send();
   }
-  if (findByEmail(email)) {
+  if (findByEmail(email, users)) {
     return res.status(400).send();
   }
   const hashedPassword = bcrypt.hashSync(password, 10);
@@ -130,9 +129,9 @@ app.post("/register", redirectLogin, (req, res) => {
     password: hashedPassword,
   };
   req.session.user_id = id;
-  console.log(users);
   res.redirect("/urls");
 });
+
 app.get("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
   let userUrls = urlsForUser(req.session.user_id);
@@ -146,6 +145,7 @@ app.get("/urls/:shortURL", (req, res) => {
   };
   res.render("urls_show", templateVars);
 });
+
 app.post("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
   let userUrls = urlsForUser(req.session.user_id);
@@ -155,6 +155,7 @@ app.post("/urls/:shortURL", (req, res) => {
   urlDatabase[shortURL].longURL = req.body.longURL;
   res.redirect("/urls");
 });
+
 app.post("/urls/:shortURL/delete", authMiddleware, (req, res) => {
   let shortURL = req.params.shortURL;
   let userUrls = urlsForUser(req.session.user_id);
@@ -164,6 +165,7 @@ app.post("/urls/:shortURL/delete", authMiddleware, (req, res) => {
   delete urlDatabase[shortURL];
   res.redirect("/urls");
 });
+
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const url = urlDatabase[shortURL];
@@ -176,20 +178,22 @@ app.get("/u/:shortURL", (req, res) => {
 app.post("/login", redirectLogin, (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = findByEmail(email);
+  const user = findByEmail(email, users);
   if (!user) {
     return res.status(403).send();
   }
   if (!bcrypt.compareSync(password, user.password)) {
     return res.status(403).send();
   }
-  req.session.user_id= user.id;
+  req.session.user_id = user.id;
   res.redirect("/urls");
 });
+
 app.post("/logout", authMiddleware, (req, res) => {
   delete req.session.user_id;
   res.redirect("/urls");
 });
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
