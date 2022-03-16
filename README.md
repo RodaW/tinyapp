@@ -11,7 +11,6 @@ src=https://user-images.githubusercontent.com/93175113/145638621-3dde43a1-f440-4
 <img width="685" alt="login" 
 src=https://user-images.githubusercontent.com/93175113/145638578-bcc09024-1b2d-4756-869d-4c7c541e8691.png>
 
-<img width="685" alt="Urls-page" src="https://user-images.githubusercontent.com/93175113/145640052-9ce99a97-3c1a-4e71-80fa-f8b34ace69d7.png">
 
 ## Dependencies
 
